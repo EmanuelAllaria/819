@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, ViewStyle } from "react-native";
 import { Colors } from "../theme/colors";
 import { Radius } from "../theme/radius";
 import { Spacing } from "../theme/spacing";
@@ -16,60 +16,91 @@ export function AppButton(props: {
   const variant = props.variant ?? "primary";
   const disabled = props.disabled ?? false;
   const loading = props.loading ?? false;
+  const isDisabled = disabled || loading;
 
   return (
-    <Pressable
+    <TouchableOpacity
       onPress={props.onPress}
-      disabled={disabled || loading}
-      style={({ pressed }) => [
+      disabled={isDisabled}
+      activeOpacity={0.92}
+      style={[
         styles.base,
         variant === "primary" ? styles.primary : styles.ghost,
-        (disabled || loading) ? styles.disabled : null,
-        pressed && !(disabled || loading) ? styles.pressed : null,
+        isDisabled ? (variant === "primary" ? styles.primaryDisabled : styles.ghostDisabled) : null,
         props.style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "primary" ? Colors.paper : Colors.ink} />
+        <ActivityIndicator color={variant === "primary" && !isDisabled ? Colors.paper : Colors.inkMuted} />
       ) : (
-        <Text style={[styles.label, variant === "primary" ? styles.labelPrimary : styles.labelGhost]}>
+        <Text
+          style={[
+            styles.label,
+            variant === "primary" ? styles.labelPrimary : styles.labelGhost,
+            isDisabled ? styles.labelDisabled : null,
+          ]}
+        >
           {props.label}
         </Text>
       )}
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
     height: 48,
+    width: "100%",
+    alignSelf: "stretch",
     borderRadius: Radius.lg,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.lg,
+    overflow: "hidden",
   },
   primary: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.primaryBright,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.10)",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  primaryDisabled: {
+    backgroundColor: "rgba(0,0,0,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.10)",
+    elevation: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
   },
   ghost: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.primaryBright,
+  },
+  ghostDisabled: {
+    backgroundColor: "rgba(0,0,0,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.12)",
   },
   label: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
+    includeFontPadding: false,
+    textAlignVertical: "center",
+    letterSpacing: 0.2,
   },
   labelPrimary: {
     color: Colors.paper,
   },
   labelGhost: {
-    color: Colors.ink,
+    color: Colors.primaryBright,
   },
-  pressed: {
-    opacity: 0.9,
-  },
-  disabled: {
-    opacity: 0.55,
+  labelDisabled: {
+    color: Colors.inkMuted,
   },
 });
