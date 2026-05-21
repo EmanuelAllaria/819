@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-paper: #ffffff;
+  --color-ink: #000000;
+  --color-primary: #e00000;
+  --color-primary-bright: #ff0000;
+  --color-accent: #ff4040;
+  --color-accent-soft: #ff7676;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+input::file-selector-button {
+  font: inherit;
+}
