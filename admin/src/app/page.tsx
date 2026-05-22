@@ -1,6 +1,8 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import logo from "@/assets/logo.jpeg";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -65,8 +67,12 @@ export default function Home() {
       <div className="h-44 bg-primary">
         <div className="mx-auto flex h-full w-full max-w-5xl items-center justify-center px-6">
           <div className="text-center text-white">
-            <div className="text-3xl font-semibold tracking-wide">ISI PLAZA</div>
-            <div className="mt-1 text-xs tracking-[0.28em] opacity-90">admin panel</div>
+            <Image
+              src={logo}
+              alt="ISI PLAZA"
+              priority
+              className="mx-auto h-16 w-auto rounded-xl"
+            />
           </div>
         </div>
       </div>
