@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { Colors } from "../theme/colors";
 import { Radius } from "../theme/radius";
@@ -16,9 +16,15 @@ export function AppInput(props: {
   maxLength?: number;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
 }) {
+  const [focused, setFocused] = useState(false);
   const inputStyle = useMemo(() => {
-    return [styles.input, props.multiline ? styles.multiline : null, props.error ? styles.inputError : null];
-  }, [props.error, props.multiline]);
+    return [
+      styles.input,
+      props.multiline ? styles.multiline : null,
+      focused ? styles.inputFocused : null,
+      props.error ? styles.inputError : null,
+    ];
+  }, [focused, props.error, props.multiline]);
 
   return (
     <View style={styles.wrap}>
@@ -35,6 +41,8 @@ export function AppInput(props: {
         style={inputStyle}
         multiline={props.multiline}
         maxLength={props.maxLength}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       />
       {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
     </View>
@@ -67,6 +75,9 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: Colors.primaryBright,
+  },
+  inputFocused: {
+    borderColor: Colors.primary,
   },
   error: {
     fontSize: 12,

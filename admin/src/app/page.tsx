@@ -23,7 +23,7 @@ export default function Home() {
   }, [router]);
 
   const normalized = useMemo(() => clampToken(token), [token]);
-  const isValid = normalized.length >= 9 && normalized.length <= 15;
+  const isValid = normalized.length >= 6 && normalized.length <= 20;
   const showError = touched && !isValid;
 
   async function onSubmit(e: React.FormEvent) {
@@ -34,19 +34,22 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const res = await supabase
         .from("admin_tokens")
-        .select("id")
+        .select("*")
         .eq("token_value", normalized)
         .limit(1)
         .maybeSingle();
 
-      if (error) {
-        setServerError("Error consultando token. Revisa la conexión.");
+      if (res.error) {
+        setServerError("The token is invalid or inactive.");
         return;
       }
-      if (!data) {
-        setServerError("Token inválido.");
+
+      const data = res.data as Record<string, unknown> | null;
+      const isInactive = data ? data["is_active"] === false : true;
+      if (!data || isInactive) {
+        setServerError("The token is invalid or inactive.");
         return;
       }
 
@@ -58,77 +61,62 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-paper px-6 py-10">
-      <main className="w-full max-w-md rounded-2xl border border-black/10 bg-white shadow-card">
-        <div className="flex items-start justify-between gap-6 border-b border-black/10 px-6 py-5">
-          <div>
-            <div className="text-xs font-semibold tracking-wide text-black/60">
-              ADMIN
-            </div>
-            <h1 className="mt-1 text-lg font-semibold leading-6 text-black">
-              Acceso con Token
-            </h1>
-          </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white">
-            <span className="text-sm font-semibold">A</span>
+    <div className="relative flex min-h-screen flex-col bg-app">
+      <div className="h-44 bg-primary">
+        <div className="mx-auto flex h-full w-full max-w-5xl items-center justify-center px-6">
+          <div className="text-center text-white">
+            <div className="text-3xl font-semibold tracking-wide">ISI PLAZA</div>
+            <div className="mt-1 text-xs tracking-[0.28em] opacity-90">admin panel</div>
           </div>
         </div>
+      </div>
 
-        <form onSubmit={onSubmit} className="px-6 py-6">
-          <label className="block text-sm font-medium text-black">Token</label>
-          <div className="mt-2">
-            <input
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              onBlur={() => setTouched(true)}
-              placeholder="9 a 15 caracteres"
-              minLength={9}
-              maxLength={15}
-              autoComplete="off"
-              className={[
-                "w-full rounded-xl border px-3 py-2 text-sm outline-none",
-                "border-black/15 focus:border-primary focus:ring-4 focus:ring-accent-soft/40",
-                showError ? "border-primary-bright" : "",
-              ].join(" ")}
-            />
-            <div className="mt-2 flex items-center justify-between text-xs text-black/60">
-              <span>
-                {showError
-                  ? "El token debe tener entre 9 y 15 caracteres (sin espacios)."
-                  : "Se valida contra Supabase (admin_tokens)."}
-              </span>
-              <span className={showError ? "text-primary-bright" : ""}>
-                {normalized.length}/15
-              </span>
-            </div>
-            {serverError ? (
-              <div className="mt-2 text-xs font-semibold text-primary-bright">
-                {serverError}
+      <div className="mx-auto -mt-16 w-full max-w-md px-6 pb-12">
+        <main className="rounded-3xl border border-black/10 bg-white shadow-card">
+          <div className="px-8 pb-7 pt-8">
+            <h1 className="text-2xl font-semibold text-ink">Sign In</h1>
+
+            <form onSubmit={onSubmit} className="mt-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-ink">Token:</label>
+                <input
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  onBlur={() => setTouched(true)}
+                  placeholder="enter your token..."
+                  minLength={6}
+                  maxLength={20}
+                  autoComplete="off"
+                  className={[
+                    "mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm outline-none",
+                    "border-black/15 focus:border-primary focus:ring-4 focus:ring-accent-soft",
+                    showError ? "border-primary" : "",
+                  ].join(" ")}
+                />
               </div>
-            ) : null}
-          </div>
 
-          <button
-            type="submit"
-            disabled={!isValid}
-            className={[
-              "mt-5 w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white",
-              "bg-primary hover:bg-primary-bright active:bg-primary",
-              "focus:outline-none focus:ring-4 focus:ring-accent-soft/50",
-              !isValid ? "cursor-not-allowed opacity-60" : "",
-            ].join(" ")}
-          >
-            {isLoading ? "Validando..." : "Acceder"}
-          </button>
-        </form>
+              <button
+                type="submit"
+                disabled={!isValid || isLoading}
+                className={[
+                  "w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white",
+                  "bg-primary hover:bg-primary-bright active:bg-primary",
+                  "focus:outline-none focus:ring-4 focus:ring-accent-soft",
+                  !isValid || isLoading ? "cursor-not-allowed opacity-70" : "",
+                ].join(" ")}
+              >
+                {isLoading ? "checking..." : "enter panel"}
+              </button>
 
-        <div className="border-t border-black/10 px-6 py-4 text-xs text-black/60">
-          <div className="flex items-center justify-between">
-            <span>Modo: mock interactivo</span>
-            <span className="font-mono">v0</span>
+              {serverError ? (
+                <div className="text-sm font-semibold text-primary">
+                  The token is invalid or inactive.
+                </div>
+              ) : null}
+            </form>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

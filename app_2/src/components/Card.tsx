@@ -15,5 +15,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
   },
 });

@@ -1,4 +1,6 @@
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -20,7 +22,7 @@ import { AppInput } from "../components/AppInput";
 import { Card } from "../components/Card";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
-import { RootStackParamList } from "../navigation/types";
+import type { RootStackParamList, WholesalerTabParamList } from "../navigation/types";
 import { Colors } from "../theme/colors";
 import { Radius } from "../theme/radius";
 import { Spacing } from "../theme/spacing";
@@ -52,7 +54,6 @@ const COUNTRIES = [
   "Venezuela",
   "Ecuador",
   "Perú",
-  "Bolivia",
   "Chile",
   "Argentina",
   "Uruguay",
@@ -60,16 +61,38 @@ const COUNTRIES = [
 
 const STATES_BY_COUNTRY: Record<string, readonly string[]> = {
   México: [
-    "CDMX",
-    "Jalisco",
-    "Nuevo León",
-    "Estado de México",
-    "Puebla",
-    "Guanajuato",
-    "Querétaro",
-    "Yucatán",
-    "Veracruz",
+    "Aguascalientes",
     "Baja California",
+    "Baja California Sur",
+    "Campeche",
+    "Chiapas",
+    "Chihuahua",
+    "Ciudad de México",
+    "Coahuila",
+    "Colima",
+    "Durango",
+    "Guanajuato",
+    "Guerrero",
+    "Hidalgo",
+    "Jalisco",
+    "Estado de México",
+    "Michoacán",
+    "Morelos",
+    "Nayarit",
+    "Nuevo León",
+    "Oaxaca",
+    "Puebla",
+    "Querétaro",
+    "Quintana Roo",
+    "San Luis Potosí",
+    "Sinaloa",
+    "Sonora",
+    "Tabasco",
+    "Tamaulipas",
+    "Tlaxcala",
+    "Veracruz",
+    "Yucatán",
+    "Zacatecas",
   ],
   Guatemala: ["Guatemala", "Sacatepéquez", "Quetzaltenango", "Escuintla", "Petén"],
   "El Salvador": ["San Salvador", "La Libertad", "Santa Ana", "San Miguel", "Sonsonate"],
@@ -81,7 +104,6 @@ const STATES_BY_COUNTRY: Record<string, readonly string[]> = {
   Venezuela: ["Distrito Capital", "Miranda", "Zulia", "Carabobo", "Lara"],
   Ecuador: ["Pichincha", "Guayas", "Azuay", "Manabí", "Tungurahua"],
   Perú: ["Lima", "Arequipa", "La Libertad", "Piura", "Cusco"],
-  Bolivia: ["La Paz", "Santa Cruz", "Cochabamba", "Oruro", "Tarija"],
   Chile: ["Región Metropolitana", "Valparaíso", "Biobío", "Araucanía", "Antofagasta"],
   Argentina: ["Buenos Aires", "CABA", "Córdoba", "Santa Fe", "Mendoza"],
   Uruguay: ["Montevideo", "Canelones", "Maldonado", "Salto", "Colonia"],
@@ -117,7 +139,7 @@ function makeSlots(): CatalogSlot[] {
   }));
 }
 
-type Props = NativeStackScreenProps<RootStackParamList, "OnboardingProfile">;
+type Props = BottomTabScreenProps<WholesalerTabParamList, "Profile">;
 
 function SelectField(props: {
   label: string;
@@ -257,8 +279,9 @@ async function uploadToBucket(bucket: string, path: string, uri: string) {
   return pub.data.publicUrl;
 }
 
-export function OnboardingProfileScreen({ navigation }: Props) {
+export function OnboardingProfileScreen(_props: Props) {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [name, setName] = useState("");
@@ -310,8 +333,8 @@ export function OnboardingProfileScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    if (!user) navigation.replace("Register");
-  }, [isAuthLoading, navigation, user]);
+    if (!user) rootNav.reset({ index: 0, routes: [{ name: "WholesalerAccess" }] });
+  }, [isAuthLoading, rootNav, user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -322,9 +345,9 @@ export function OnboardingProfileScreen({ navigation }: Props) {
       setIsHydrating(true);
       try {
         const wholesalerRes = await supabase
-          .from("wholesalers")
+          .from("wholesaler_profiles")
           .select(
-            "company_name,description,logo_url,whatsapp,instagram,facebook,website,category,country,state_province",
+            "nombre,descripcion,foto_perfil_url,whatsapp,instagram,facebook,web,categoria,pais,estado_provincia",
           )
           .eq("id", user.id)
           .limit(1)
@@ -332,42 +355,48 @@ export function OnboardingProfileScreen({ navigation }: Props) {
 
         const catalogRes = await supabase
           .from("catalogs")
-          .select("image_url,display_order")
+          .select("image_url,display_order,carousel_slot")
           .eq("wholesaler_id", user.id)
+          .order("carousel_slot", { ascending: true })
           .order("display_order", { ascending: true })
-          .limit(5);
+          .order("created_at", { ascending: false })
+          .limit(240);
 
         if (cancelled) return;
 
         if (wholesalerRes.data) {
-          setName((wholesalerRes.data.company_name ?? "").toString());
-          setDescription((wholesalerRes.data.description ?? "").toString());
+          setName((wholesalerRes.data.nombre ?? "").toString());
+          setDescription((wholesalerRes.data.descripcion ?? "").toString());
           setProfilePhotoUri(null);
-          setProfilePhotoUrl((wholesalerRes.data.logo_url ?? "").toString());
-          setCategory((wholesalerRes.data.category ?? "").toString());
-          setCountry((wholesalerRes.data.country ?? "").toString());
-          setStateProvince((wholesalerRes.data.state_province ?? "").toString());
+          setProfilePhotoUrl((wholesalerRes.data.foto_perfil_url ?? "").toString());
+          setCategory((wholesalerRes.data.categoria ?? "").toString());
+          setCountry((wholesalerRes.data.pais ?? "").toString());
+          setStateProvince((wholesalerRes.data.estado_provincia ?? "").toString());
           setSocial({
             whatsapp: (wholesalerRes.data.whatsapp ?? "").toString(),
             instagram: (wholesalerRes.data.instagram ?? "").toString(),
             facebook: (wholesalerRes.data.facebook ?? "").toString(),
-            web: (wholesalerRes.data.website ?? "").toString(),
+            web: (wholesalerRes.data.web ?? "").toString(),
           });
         }
 
-        const images = (catalogRes.data ?? [])
-          .slice()
-          .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-          .map((x) => x.image_url)
-          .filter((u) => typeof u === "string" && u.length > 0)
-          .slice(0, 5);
+        const grouped = new Map<number, string[]>();
+        for (const row of catalogRes.data ?? []) {
+          const slot = typeof row.carousel_slot === "number" ? row.carousel_slot : 1;
+          if (slot < 1 || slot > 5) continue;
+          const url = row.image_url;
+          if (typeof url !== "string" || url.trim().length === 0) continue;
+          const arr = grouped.get(slot) ?? [];
+          arr.push(url);
+          grouped.set(slot, arr);
+        }
 
         setSlots((prev) => {
           const base = prev.length === 5 ? prev : makeSlots();
           return base.map((s, i) => ({
             ...s,
             inputUrl: "",
-            images: images[i] ? [images[i]!] : [],
+            images: (grouped.get(i + 1) ?? []).slice(),
           }));
         });
 
@@ -434,33 +463,24 @@ export function OnboardingProfileScreen({ navigation }: Props) {
     if (!user) return;
     if (!effectivePhoto) return;
 
-    const flatImages: string[] = [];
-    for (const slot of slots) {
-      for (const img of slot.images) {
-        flatImages.push(img);
-        if (flatImages.length >= 5) break;
-      }
-      if (flatImages.length >= 5) break;
-    }
-
     setIsSaving(true);
     try {
       const profilePath = `${user.id}/profile-${Date.now()}.${fileExtFromUri(effectivePhoto)}`;
       const profilePublicUrl = await uploadToBucket("profiles", profilePath, effectivePhoto);
 
       const updateWholesaler = await supabase
-        .from("wholesalers")
+        .from("wholesaler_profiles")
         .update({
-          company_name: name.trim(),
-          description: description.trim(),
-          logo_url: profilePublicUrl,
-          category: category.trim(),
-          country: country.trim(),
-          state_province: stateProvince.trim(),
+          nombre: name.trim(),
+          descripcion: description.trim(),
+          foto_perfil_url: profilePublicUrl,
+          categoria: category.trim(),
+          pais: country.trim(),
+          estado_provincia: stateProvince.trim(),
           whatsapp: social.whatsapp.trim() || null,
           instagram: social.instagram.trim() || null,
           facebook: social.facebook.trim() || null,
-          website: social.web.trim() || null,
+          web: social.web.trim() || null,
         })
         .eq("id", user.id);
 
@@ -471,25 +491,34 @@ export function OnboardingProfileScreen({ navigation }: Props) {
       const del = await supabase.from("catalogs").delete().eq("wholesaler_id", user.id);
       if (del.error) throw new Error(del.error.message ?? "No se pudo reiniciar el catálogo.");
 
-      const catalogUrls: string[] = [];
-      for (let i = 0; i < flatImages.length; i++) {
-        const uri = flatImages[i]!;
-        const path = `${user.id}/catalog-${Date.now()}-${i + 1}.${fileExtFromUri(uri)}`;
-        const publicUrl = await uploadToBucket("catalogs", path, uri);
-        catalogUrls.push(publicUrl);
+      const toUpload: { carousel_slot: number; display_order: number; uri: string }[] = [];
+      for (let slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+        const slot = slots[slotIndex]!;
+        for (let i = 0; i < slot.images.length; i++) {
+          const uri = slot.images[i]!;
+          toUpload.push({ carousel_slot: slotIndex + 1, display_order: i + 1, uri });
+        }
       }
 
-      if (catalogUrls.length > 0) {
-        const insert = await supabase.from("catalogs").insert(
-          catalogUrls.map((u, i) => ({
-            wholesaler_id: user.id,
-            image_url: u,
-            display_order: i + 1,
-          })),
-        );
-        if (insert.error) {
-          throw new Error(insert.error.message ?? "No se pudo guardar el catálogo.");
-        }
+      const insertedCatalogUrls: string[] = [];
+      const rows: { wholesaler_id: string; image_url: string; carousel_slot: number; display_order: number }[] = [];
+      for (let i = 0; i < toUpload.length; i++) {
+        const item = toUpload[i]!;
+        const uri = item.uri;
+        const path = `${user.id}/slot-${item.carousel_slot}/catalog-${Date.now()}-${item.carousel_slot}-${i + 1}.${fileExtFromUri(uri)}`;
+        const publicUrl = await uploadToBucket("catalogs", path, uri);
+        insertedCatalogUrls.push(publicUrl);
+        rows.push({
+          wholesaler_id: user.id,
+          image_url: publicUrl,
+          carousel_slot: item.carousel_slot,
+          display_order: item.display_order,
+        });
+      }
+
+      if (rows.length > 0) {
+        const insert = await supabase.from("catalogs").insert(rows);
+        if (insert.error) throw new Error(insert.error.message ?? "No se pudo guardar el catálogo.");
       }
 
       const snapshot: ProfileSnapshot = {
@@ -503,12 +532,11 @@ export function OnboardingProfileScreen({ navigation }: Props) {
           facebook: social.facebook.trim(),
           web: social.web.trim(),
         },
-        catalogImageUrls: catalogUrls,
+        catalogImageUrls: insertedCatalogUrls,
       };
       setSaved(snapshot);
       Alert.alert("Guardado", "Perfil y catálogo guardados en Supabase.");
     } catch (e) {
-      console.error(e);
       const msg = e instanceof Error ? e.message : "Error inesperado.";
       Alert.alert("Error", msg);
     } finally {
@@ -527,7 +555,7 @@ export function OnboardingProfileScreen({ navigation }: Props) {
                 try {
                   await supabase.auth.signOut();
                 } finally {
-                  navigation.reset({ index: 0, routes: [{ name: "Register" }] });
+                  rootNav.reset({ index: 0, routes: [{ name: "WholesalerAccess" }] });
                 }
               }}
               hitSlop={10}
@@ -645,8 +673,8 @@ export function OnboardingProfileScreen({ navigation }: Props) {
             error={touched ? errors.state : undefined}
           />
           <Text style={styles.helper}>
-            Para aparecer en App 1, el admin debe darte acceso (access_expires_at) y estos valores deben coincidir
-            con los filtros.
+            Para aparecer en App 1, el admin debe darte acceso y tu suscripción debe estar vigente (30 días desde la
+            aprobación).
           </Text>
         </Card>
 
@@ -733,7 +761,7 @@ export function OnboardingProfileScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.paper },
+  flex: { flex: 1, backgroundColor: Colors.app },
   container: {
     padding: Spacing.xl,
     paddingBottom: Spacing.xxl,

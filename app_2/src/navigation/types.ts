@@ -1,5 +1,11 @@
 export type RootStackParamList = {
-  Register: undefined;
-  Subscription: { name: string; email: string } | undefined;
-  OnboardingProfile: undefined;
+  WholesalerAccess: undefined;
+  Paywall: undefined;
+  WholesalerTabs: undefined;
+};
+
+export type WholesalerTabParamList = {
+  Profile: undefined;
+  Metrics: undefined;
+  Settings: undefined;
 };

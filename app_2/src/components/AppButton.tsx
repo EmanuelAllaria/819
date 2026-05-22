@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   primary: {
-    backgroundColor: Colors.primaryBright,
+    backgroundColor: Colors.primary,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.10)",
     elevation: 2,
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   ghost: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.primaryBright,
+    borderColor: Colors.primary,
   },
   ghostDisabled: {
     backgroundColor: "rgba(0,0,0,0.06)",
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     color: Colors.paper,
   },
   labelGhost: {
-    color: Colors.primaryBright,
+    color: Colors.primary,
   },
   labelDisabled: {
     color: Colors.inkMuted,

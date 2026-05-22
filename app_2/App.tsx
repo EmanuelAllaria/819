@@ -1,18 +1,24 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { RootNavigator } from "./src/navigation/RootNavigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "./src/lib/auth";
+import { BuyerSessionProvider } from "./src/lib/buyer/session";
+import { RoleProvider } from "./src/lib/role";
+import { AppNavigator } from "./src/navigation/App";
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-          <StatusBar style="dark" />
-        </NavigationContainer>
-      </AuthProvider>
+      <RoleProvider>
+        <BuyerSessionProvider>
+          <AuthProvider>
+            <NavigationContainer>
+              <AppNavigator />
+              <StatusBar style="dark" />
+            </NavigationContainer>
+          </AuthProvider>
+        </BuyerSessionProvider>
+      </RoleProvider>
     </SafeAreaProvider>
   );
 }

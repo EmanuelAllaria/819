@@ -9,13 +9,13 @@ import { RootStackParamList } from "../navigation/types";
 import { Colors } from "../theme/colors";
 import { Spacing } from "../theme/spacing";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Subscription">;
+type Props = NativeStackScreenProps<RootStackParamList, "Paywall">;
 
 const WHATSAPP_URL =
   "https://wa.me/521000000000?text=" +
-  encodeURIComponent("Hola, quiero suscribirme a la app (mock). ¿Me autorizan el acceso?");
+  encodeURIComponent("Hola, quiero suscribirme a ISI PLAZA (69 mxn). ¿Me autorizan el acceso?");
 
-export function SubscriptionScreen({ navigation, route }: Props) {
+export function SubscriptionScreen({ navigation }: Props) {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isChecking, setIsChecking] = useState(false);
   const [status, setStatus] = useState<{
@@ -31,18 +31,11 @@ export function SubscriptionScreen({ navigation, route }: Props) {
     } catch {}
   }
 
-  function onContinue() {
-    if (!status.canContinue) return;
-    navigation.navigate("OnboardingProfile");
-  }
-
-  const who = route.params ? `${route.params.name} · ${route.params.email}` : "Nuevo usuario";
-
   async function signOut() {
     try {
       await supabase.auth.signOut();
     } finally {
-      navigation.reset({ index: 0, routes: [{ name: "Register" }] });
+      navigation.reset({ index: 0, routes: [{ name: "WholesalerAccess" }] });
     }
   }
 
@@ -51,8 +44,8 @@ export function SubscriptionScreen({ navigation, route }: Props) {
     setIsChecking(true);
     try {
       const { data, error } = await supabase
-        .from("wholesalers")
-        .select("access_expires_at")
+        .from("wholesaler_profiles")
+        .select("acceso,fecha_aprobacion")
         .eq("id", user.id)
         .limit(1)
         .maybeSingle();
@@ -62,21 +55,25 @@ export function SubscriptionScreen({ navigation, route }: Props) {
         return;
       }
 
-      const expiresAt = data?.access_expires_at ?? null;
-      if (!expiresAt) {
+      const enabled = (data as { acceso?: boolean } | null)?.acceso ?? false;
+      const approvedAt = (data as { fecha_aprobacion?: string | null } | null)?.fecha_aprobacion ?? null;
+      if (!enabled || !approvedAt) {
         setStatus({ canContinue: false, expiresAtIso: null, message: "Aún sin acceso asignado." });
         return;
       }
 
       const now = new Date();
-      const exp = new Date(expiresAt);
+      const exp = new Date(approvedAt);
+      exp.setDate(exp.getDate() + 30);
       const active = exp.getTime() > now.getTime();
 
       setStatus({
         canContinue: active,
-        expiresAtIso: expiresAt,
+        expiresAtIso: exp.toISOString(),
         message: active ? "Acceso activo. Puedes continuar." : "Acceso vencido.",
       });
+
+      if (active) navigation.replace("WholesalerTabs");
     } finally {
       setIsChecking(false);
     }
@@ -85,7 +82,7 @@ export function SubscriptionScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
-      navigation.replace("Register");
+      navigation.replace("WholesalerAccess");
       return;
     }
     checkStatus();
@@ -102,28 +99,18 @@ export function SubscriptionScreen({ navigation, route }: Props) {
             <Text style={styles.signOut}>Cerrar sesión</Text>
           </Pressable>
         </View>
-        <Text style={styles.subtitle}>{who}</Text>
-        <Text style={styles.hint}>Estado: {status.message}</Text>
+        <Text style={styles.hint}>Estado: {isChecking ? "Verificando..." : status.message}</Text>
         {status.expiresAtIso ? (
           <Text style={styles.hint}>Vence: {new Date(status.expiresAtIso).toLocaleString()}</Text>
         ) : null}
       </View>
 
       <Card style={styles.card}>
-        <Text style={styles.cardTitle}>Pago (mock)</Text>
+        <Text style={styles.cardTitle}>Pago</Text>
         <Text style={styles.cardText}>
-          Al tocar “Suscribirme” te redirige a WhatsApp (enlace ficticio) para simular el pago.
+          Al tocar “Suscribirme” se abre WhatsApp para coordinar el pago.
         </Text>
         <AppButton label="Suscribirme" onPress={onSubscribe} />
-      </Card>
-
-      <Card style={styles.card}>
-        <Text style={styles.cardTitle}>Verificación</Text>
-        <Text style={styles.cardText}>
-          El acceso queda habilitado cuando el admin asigna access_expires_at y es mayor a la fecha actual.
-        </Text>
-        <AppButton label="Verificar Estado" onPress={checkStatus} loading={isChecking} />
-        <AppButton label="Continuar" onPress={onContinue} disabled={!status.canContinue} />
       </Card>
     </ScrollView>
   );
