@@ -63,63 +63,68 @@ export default function Home() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-app">
-      <div className="h-44 bg-primary">
-        <div className="mx-auto flex h-full w-full max-w-5xl items-center justify-center px-6">
-          <div className="text-center text-white">
-            <Image
-              src={logo}
-              alt="ISI PLAZA"
-              priority
-              className="mx-auto h-16 w-auto rounded-xl"
-            />
+    <div className="relative min-h-screen">
+      <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-primary to-primary-bright" />
+      <div className="absolute inset-x-0 top-64 bottom-0 bg-zinc-300" />
+
+      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl justify-center px-6 pt-10 pb-12">
+        <main className="w-full max-w-md">
+          <div className="flex flex-col items-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/85 shadow-card ring-1 ring-black/10">
+              <Image src={logo} alt="ISI PLAZA" priority className="h-14 w-auto" />
+            </div>
+            <div className="mt-3 text-xs tracking-[0.28em] text-white/80">
+              ADMIN PANEL
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="mx-auto -mt-16 w-full max-w-md px-6 pb-12">
-        <main className="rounded-3xl border border-black/10 bg-white shadow-card">
-          <div className="px-8 pb-7 pt-8">
-            <h1 className="text-2xl font-semibold text-ink">Sign In</h1>
+          <div className="mt-6 rounded-2xl border border-black/10 bg-white shadow-card">
+            <div className="px-7 pb-7 pt-6">
+              <h1 className="text-center text-xl font-semibold text-ink">
+                Sign In
+              </h1>
 
-            <form onSubmit={onSubmit} className="mt-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-ink">Token:</label>
-                <input
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  onBlur={() => setTouched(true)}
-                  placeholder="enter your token..."
-                  minLength={6}
-                  maxLength={20}
-                  autoComplete="off"
-                  className={[
-                    "mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm outline-none",
-                    "border-black/15 focus:border-primary focus:ring-4 focus:ring-accent-soft",
-                    showError ? "border-primary" : "",
-                  ].join(" ")}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={!isValid || isLoading}
-                className={[
-                  "w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white",
-                  "bg-primary hover:bg-primary-bright active:bg-primary",
-                  "focus:outline-none focus:ring-4 focus:ring-accent-soft",
-                  !isValid || isLoading ? "cursor-not-allowed opacity-70" : "",
-                ].join(" ")}
-              >
-                {isLoading ? "checking..." : "enter panel"}
-              </button>
-
-              {serverError ? (
-                <div className="text-sm font-semibold text-primary">
-                  The token is invalid or inactive.
+              <form onSubmit={onSubmit} className="mt-6 space-y-5">
+                <div>
+                  <label className="block text-xs font-semibold text-black/70">
+                    Token:
+                  </label>
+                  <input
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    onBlur={() => setTouched(true)}
+                    placeholder="enter your token..."
+                    minLength={6}
+                    maxLength={20}
+                    autoComplete="off"
+                    className={[
+                      "mt-2 w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none",
+                      "border-black/15 focus:border-primary focus:ring-4 focus:ring-accent-soft",
+                      showError ? "border-primary" : "",
+                    ].join(" ")}
+                  />
                 </div>
-              ) : null}
-            </form>
+
+                <button
+                  type="submit"
+                  disabled={!isValid || isLoading}
+                  className={[
+                    "w-full rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm",
+                    "bg-primary hover:bg-primary-bright active:bg-primary",
+                    "focus:outline-none focus:ring-4 focus:ring-accent-soft",
+                    !isValid || isLoading ? "cursor-not-allowed opacity-70" : "",
+                  ].join(" ")}
+                >
+                  {isLoading ? "checking..." : "enter panel"}
+                </button>
+
+                {serverError ? (
+                  <div className="text-center text-sm font-semibold text-primary">
+                    {serverError}
+                  </div>
+                ) : null}
+              </form>
+            </div>
           </div>
         </main>
       </div>
